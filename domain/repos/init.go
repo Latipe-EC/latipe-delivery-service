@@ -8,7 +8,7 @@ import (
 )
 
 func InitProvinceRepository() ProvinceRepository {
-	file, err := os.Open("./data/province.json")
+	file, err := os.Open("./data/vn_data/province.json")
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
 	}
@@ -37,7 +37,7 @@ func InitProvinceRepository() ProvinceRepository {
 }
 
 func InitDistrictRepository() DistrictRepos {
-	file, err := os.Open("./data/district.json")
+	file, err := os.Open("./data/vn_data/district.json")
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
 	}
@@ -65,7 +65,7 @@ func InitDistrictRepository() DistrictRepos {
 }
 
 func InitWardRepository() WardRepos {
-	file, err := os.Open("./data/ward.json")
+	file, err := os.Open("./data/vn_data/ward.json")
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
 	}

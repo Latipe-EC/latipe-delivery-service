@@ -1,4 +1,4 @@
-package domain
+package dto
 
 type CalculateShippingAddressCostRequest struct {
 	StoreAddId string `json:"store_add_id"`

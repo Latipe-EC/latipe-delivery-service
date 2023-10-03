@@ -1,4 +1,4 @@
-package domain
+package dto
 
 type CalculateShippingCostRequest struct {
 	SrcCode    string `json:"src_code"`

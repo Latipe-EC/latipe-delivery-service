@@ -1,20 +1,20 @@
 package api
 
 import (
-	"delivery-service/repos"
+	repos2 "delivery-service/domain/repos"
 	"github.com/gofiber/fiber/v2"
 	"net/http"
 )
 
 type VietNamProvinceHandle struct {
-	provinceRepo *repos.ProvinceRepository
-	districtRepo *repos.DistrictRepos
-	wardRepo     *repos.WardRepos
+	provinceRepo *repos2.ProvinceRepository
+	districtRepo *repos2.DistrictRepos
+	wardRepo     *repos2.WardRepos
 }
 
-func NewVietNamProvinceHandle(provinceRepo *repos.ProvinceRepository,
-	districtRepo *repos.DistrictRepos,
-	wardRepo *repos.WardRepos) *VietNamProvinceHandle {
+func NewVietNamProvinceHandle(provinceRepo *repos2.ProvinceRepository,
+	districtRepo *repos2.DistrictRepos,
+	wardRepo *repos2.WardRepos) *VietNamProvinceHandle {
 	return &VietNamProvinceHandle{
 		provinceRepo: provinceRepo,
 		districtRepo: districtRepo,

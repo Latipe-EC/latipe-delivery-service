@@ -1,4 +1,4 @@
-package domain
+package entities
 
 type ProvinceDetail struct {
 	Name         string `json:"name"`
