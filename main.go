@@ -72,7 +72,9 @@ func main() {
 	local.Get("/ward/:id", vietnamProvinceApi.GetAllWardByDistrict)
 
 	shipping := v1.Group("/shipping")
-	shipping.Post("/calculate-cost-anonymous", shippingApi.CalculateShippingByProvinceCode)
+
+	cost := shipping.Group("/cost")
+	cost.Post("/anonymous", shippingApi.CalculateShippingByProvinceCode)
 
 	err = app.Listen(":5000")
 	if err != nil {

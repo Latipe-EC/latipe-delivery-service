@@ -24,32 +24,37 @@ func NewShippingCostService(provinceRepo *repos.ProvinceRepository, userService 
 }
 
 func (sh ShippingCostService) CalculateByProvinceCode(ctx context.Context,
-	req *dto.CalculateShippingCostRequest) (*dto.CalculateShippingCostShipping, error) {
+	req *dto.CalculateShippingCostRequest) ([]*dto.CalculateShippingCostShipping, error) {
 
 	src := sh.provinceRepo.GetByKey(req.SrcCode)
 	dest := sh.provinceRepo.GetByKey(req.DestCode)
 
-	delivery, err := sh.deliRepo.GetById(ctx, req.DeliveryId)
+	deliveries, err := sh.deliRepo.GetAll(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if src.Code == "" || dest.Code == "" || delivery == nil {
+	if src.Code == "" || dest.Code == "" || len(deliveries) == 0 {
 		return nil, errors.New("not found")
 	}
 
-	cost, receive := CalculateShippingCodes(src.Code, dest.Code, delivery.BaseCost)
-	layout := "2006-01-02"
-	formattedTime := receive.Format(layout)
+	var resp []*dto.CalculateShippingCostShipping
+	for _, deli := range deliveries {
+		cost, receive := CalculateShippingCodes(src.Code, dest.Code, deli.BaseCost)
+		layout := "2006-01-02"
+		formattedTime := receive.Format(layout)
 
-	resp := dto.CalculateShippingCostShipping{
-		SrcCode:      src.Code,
-		DestCode:     dest.Code,
-		ReceiveDate:  formattedTime,
-		DeliveryId:   delivery.ID.Hex(),
-		DeliveryName: delivery.DeliveryName,
-		Cost:         cost,
+		data := dto.CalculateShippingCostShipping{
+			SrcCode:      src.Code,
+			DestCode:     dest.Code,
+			ReceiveDate:  formattedTime,
+			DeliveryId:   deli.ID.Hex(),
+			DeliveryName: deli.DeliveryName,
+			Cost:         cost,
+		}
+
+		resp = append(resp, &data)
 	}
 
-	return &resp, err
+	return resp, err
 }

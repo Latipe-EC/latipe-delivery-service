@@ -3,6 +3,7 @@ package repos
 import (
 	"context"
 	"delivery-service/domain/entities"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -31,7 +32,7 @@ func (dr DeliveryRepos) GetById(ctx context.Context, deliId string) (*entities.D
 func (dr DeliveryRepos) GetAll(ctx context.Context) ([]entities.Delivery, error) {
 	var delis []entities.Delivery
 
-	cursor, err := dr.deliveryCollection.Find(ctx, nil)
+	cursor, err := dr.deliveryCollection.Find(ctx, bson.D{{}}, nil)
 	if err != nil {
 		return nil, err
 	}
