@@ -4,6 +4,7 @@ import (
 	"context"
 	"delivery-service/adapter/userserv"
 	"delivery-service/domain/dto"
+	"delivery-service/domain/entities"
 	"delivery-service/domain/repos"
 	"errors"
 )
@@ -57,4 +58,43 @@ func (sh ShippingCostService) CalculateByProvinceCode(ctx context.Context,
 	}
 
 	return resp, err
+}
+
+func (sh ShippingCostService) CalculateOrderShippingCost(ctx context.Context,
+	req *dto.OrderShippingCostRequest) (*dto.CalculateShippingCostShipping, error) {
+
+	var storeLocation []entities.ProvinceDetail
+	for _, i := range req.SrcCode {
+		src := sh.provinceRepo.GetByKey(i)
+		storeLocation = append(storeLocation, src)
+	}
+
+	dest := sh.provinceRepo.GetByKey(req.DestCode)
+
+	delivery, err := sh.deliRepo.GetById(ctx, req.DeliveryId)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(storeLocation) < 1 || dest.Code == "" || delivery == nil {
+		return nil, errors.New("not found")
+	}
+
+	data := dto.CalculateShippingCostShipping{
+		DeliveryId:   delivery.ID.Hex(),
+		DeliveryName: delivery.DeliveryName,
+	}
+
+	maxCost := 0
+	for _, i := range storeLocation {
+		cost, receive := CalculateShippingCodes(dest.Code, i.Code, delivery.BaseCost)
+		if cost > maxCost {
+			maxCost = cost
+			formattedTime := receive.Format("2006-01-02")
+			data.Cost = maxCost
+			data.ReceiveDate = formattedTime
+		}
+	}
+
+	return &data, err
 }

@@ -5,10 +5,13 @@ import (
 	"delivery-service/adapter/userserv"
 	handler "delivery-service/api"
 	"delivery-service/domain/repos"
+	"delivery-service/middleware"
+	"delivery-service/service/deliveryserv"
 	"delivery-service/service/shippingserv"
 	"encoding/json"
 	"github.com/go-resty/resty/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -26,7 +29,7 @@ func main() {
 
 	//create connect to mongo
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
-	db := client.Database("delivery_be")
+	db := client.Database("latipe_delivery_db")
 	if err != nil {
 		panic(err)
 	}
@@ -43,6 +46,7 @@ func main() {
 		JSONDecoder:  json.Unmarshal,
 		JSONEncoder:  json.Marshal,
 	})
+	app.Use(logger.New())
 
 	//create instance resty-go
 	cli := resty.New().
@@ -58,10 +62,15 @@ func main() {
 	//service
 	userServ := userserv.NewUserService(cli)
 	shippingServ := shippingserv.NewShippingCostService(&provinceRepo, &userServ, &deliveryRepo)
+	deliveryServ := deliveryserv.NewDeliveryService(&userServ, &deliveryRepo)
 
 	//api handler
 	vietnamProvinceApi := handler.NewVietNamProvinceHandle(&provinceRepo, &districtRepo, &wardRepo)
 	shippingApi := handler.NewShippingHandle(&shippingServ)
+	deliveryApi := handler.NewDeliveryHandle(&deliveryServ)
+
+	//middleware
+	authMiddleware := middleware.NewAuthMiddleware(&userServ)
 
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
@@ -75,6 +84,11 @@ func main() {
 
 	cost := shipping.Group("/cost")
 	cost.Post("/anonymous", shippingApi.CalculateShippingByProvinceCode)
+	cost.Post("/order", shippingApi.CalculateOrderShippingCost)
+
+	delivery := v1.Group("/delivery", authMiddleware.RequiredRoles([]string{"ADMIN", "USER"}))
+	delivery.Get("", deliveryApi.GetAllDeliveries)
+	delivery.Post("", deliveryApi.CreateDelivery)
 
 	err = app.Listen(":5000")
 	if err != nil {

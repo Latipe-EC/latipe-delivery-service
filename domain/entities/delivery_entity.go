@@ -12,5 +12,6 @@ type Delivery struct {
 	BaseCost     int                `json:"base_cost,omitempty" bson:"base_cost,omitempty"`
 	Description  string             `json:"description,omitempty" bson:"description,omitempty"`
 	CreateAt     time.Time          `json:"create_at,omitempty" bson:"create_at,omitempty"`
+	UpdateAt     time.Time          `json:"update_at,omitempty" bson:"update_at,omitempty"`
 	IsActive     bool               `json:"is_active,omitempty" bson:"is_active,omitempty"`
 }

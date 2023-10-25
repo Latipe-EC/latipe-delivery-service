@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"time"
 )
 
 type DeliveryRepos struct {
@@ -43,12 +44,15 @@ func (dr DeliveryRepos) GetAll(ctx context.Context) ([]entities.Delivery, error)
 	return delis, err
 }
 
-func (dr DeliveryRepos) CreateDelivery(ctx context.Context, deli *entities.Delivery) error {
-	_, err := dr.deliveryCollection.InsertOne(ctx, deli)
+func (dr DeliveryRepos) CreateDelivery(ctx context.Context, deli *entities.Delivery) (string, error) {
+	deli.CreateAt = time.Now()
+	deli.UpdateAt = time.Now()
+
+	lastId, err := dr.deliveryCollection.InsertOne(ctx, deli)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return lastId.InsertedID.(primitive.ObjectID).Hex(), err
 }
 
 func (dr DeliveryRepos) Update(ctx context.Context, deli *entities.Delivery) error {
