@@ -7,6 +7,7 @@ import (
 	"delivery-service/domain/entities"
 	"delivery-service/domain/repos"
 	"delivery-service/mapper"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type DeliveryService struct {
@@ -56,9 +57,39 @@ func (dl DeliveryService) CreateDelivery(ctx context.Context, deli *dto.CreateDe
 	return deliId, err
 }
 
-func (dl DeliveryService) UpdateDelivery(ctx context.Context, deli *entities.Delivery) error {
+func (dl DeliveryService) UpdateDelivery(ctx context.Context, deli *dto.UpdateDeliveryRequest) error {
+	id, err := primitive.ObjectIDFromHex(deli.DeliId)
+	if err != nil {
+		return err
+	}
 
-	err := dl.deliRepo.Update(ctx, deli)
+	entity := entities.Delivery{
+		ID:           id,
+		DeliveryName: deli.DeliveryName,
+		DeliveryCode: deli.DeliveryCode,
+		BaseCost:     deli.BaseCost,
+		Description:  deli.Description,
+	}
+	err = dl.deliRepo.Update(ctx, &entity)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (dl DeliveryService) UpdateStatusDelivery(ctx context.Context, deli *dto.UpdateStatusDeliveryRequest) error {
+	id, err := primitive.ObjectIDFromHex(deli.DeliId)
+	if err != nil {
+		return err
+	}
+
+	entity := entities.Delivery{
+		ID:       id,
+		IsActive: deli.Status,
+	}
+
+	err = dl.deliRepo.UpdateStatus(ctx, &entity)
 	if err != nil {
 		return err
 	}

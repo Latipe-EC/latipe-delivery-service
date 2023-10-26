@@ -41,20 +41,21 @@ func (sh ShippingCostService) CalculateByProvinceCode(ctx context.Context,
 
 	var resp []*dto.CalculateShippingCostShipping
 	for _, deli := range deliveries {
-		cost, receive := CalculateShippingCodes(src.Code, dest.Code, deli.BaseCost)
-		layout := "2006-01-02"
-		formattedTime := receive.Format(layout)
+		if deli.IsActive != false {
+			cost, receive := CalculateShippingCodes(src.Code, dest.Code, deli.BaseCost)
+			layout := "2006-01-02"
+			formattedTime := receive.Format(layout)
 
-		data := dto.CalculateShippingCostShipping{
-			SrcCode:      src.Code,
-			DestCode:     dest.Code,
-			ReceiveDate:  formattedTime,
-			DeliveryId:   deli.ID.Hex(),
-			DeliveryName: deli.DeliveryName,
-			Cost:         cost,
+			data := dto.CalculateShippingCostShipping{
+				SrcCode:      src.Code,
+				DestCode:     dest.Code,
+				ReceiveDate:  formattedTime,
+				DeliveryId:   deli.ID.Hex(),
+				DeliveryName: deli.DeliveryName,
+				Cost:         cost,
+			}
+			resp = append(resp, &data)
 		}
-
-		resp = append(resp, &data)
 	}
 
 	return resp, err
@@ -76,7 +77,7 @@ func (sh ShippingCostService) CalculateOrderShippingCost(ctx context.Context,
 		return nil, err
 	}
 
-	if len(storeLocation) < 1 || dest.Code == "" || delivery == nil {
+	if len(storeLocation) < 1 || dest.Code == "" || delivery == nil || delivery.IsActive == false {
 		return nil, errors.New("not found")
 	}
 

@@ -89,8 +89,10 @@ func main() {
 	delivery := v1.Group("/delivery", authMiddleware.RequiredRoles([]string{"ADMIN", "USER"}))
 	delivery.Get("", deliveryApi.GetAllDeliveries)
 	delivery.Post("", deliveryApi.CreateDelivery)
+	delivery.Patch("/:id", deliveryApi.UpdateDelivery)
+	delivery.Patch("/:id/status", deliveryApi.UpdateStatusDelivery)
 
-	err = app.Listen(":5000")
+	err = app.Listen(":5005")
 	if err != nil {
 		return
 	}

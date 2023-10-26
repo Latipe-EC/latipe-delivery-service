@@ -3,6 +3,7 @@ package repos
 import (
 	"context"
 	"delivery-service/domain/entities"
+	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -56,9 +57,43 @@ func (dr DeliveryRepos) CreateDelivery(ctx context.Context, deli *entities.Deliv
 }
 
 func (dr DeliveryRepos) Update(ctx context.Context, deli *entities.Delivery) error {
-	_, err := dr.deliveryCollection.UpdateByID(ctx, deli.ID, deli)
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"delivery_name", deli.DeliveryName},
+			{"delivery_code", deli.DeliveryCode},
+			{"base_cost", deli.BaseCost},
+			{"description", deli.Description},
+			{"update_at", time.Now()},
+		}},
+	}
+	data, err := dr.deliveryCollection.UpdateByID(ctx, deli.ID, update)
 	if err != nil {
 		return err
 	}
+
+	if data.ModifiedCount == 0 {
+		return errors.New("not change")
+	}
+
+	return nil
+}
+func (dr DeliveryRepos) UpdateStatus(ctx context.Context, deli *entities.Delivery) error {
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"is_active", deli.IsActive},
+			{"update_at", time.Now()},
+		}},
+	}
+	data, err := dr.deliveryCollection.UpdateByID(ctx, deli.ID, update)
+	if err != nil {
+		return err
+	}
+
+	if data.ModifiedCount == 0 {
+		return errors.New("not change")
+	}
+
 	return nil
 }

@@ -16,5 +16,5 @@ type DeliveryDetail struct {
 	Description  string    `json:"description,omitempty" `
 	CreateAt     time.Time `json:"create_at,omitempty"`
 	UpdateAt     time.Time `json:"update_at,omitempty"`
-	IsActive     bool      `json:"is_active,omitempty"`
+	IsActive     bool      `json:"is_active"`
 }
