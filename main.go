@@ -86,7 +86,7 @@ func main() {
 	cost.Post("/anonymous", shippingApi.CalculateShippingByProvinceCode)
 	cost.Post("/order", shippingApi.CalculateOrderShippingCost)
 
-	delivery := v1.Group("/delivery", authMiddleware.RequiredRoles([]string{"ADMIN", "USER"}))
+	delivery := v1.Group("/delivery", authMiddleware.RequiredRoles([]string{"ADMIN", "USER", "VENDOR"}))
 	delivery.Get("", deliveryApi.GetAllDeliveries)
 	delivery.Post("", deliveryApi.CreateDelivery)
 	delivery.Patch("/:id", deliveryApi.UpdateDelivery)
