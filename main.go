@@ -9,6 +9,7 @@ import (
 	"delivery-service/service/deliveryserv"
 	"delivery-service/service/shippingserv"
 	"encoding/json"
+	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -21,6 +22,7 @@ import (
 )
 
 func main() {
+	fmt.Printf("Init application\n")
 	//read env
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found")
