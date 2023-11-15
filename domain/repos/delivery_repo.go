@@ -46,8 +46,8 @@ func (dr DeliveryRepos) GetAll(ctx context.Context) ([]entities.Delivery, error)
 }
 
 func (dr DeliveryRepos) CreateDelivery(ctx context.Context, deli *entities.Delivery) (string, error) {
-	deli.CreateAt = time.Now()
-	deli.UpdateAt = time.Now()
+	deli.CreatedAt = time.Now()
+	deli.UpdatedAt = time.Now()
 
 	lastId, err := dr.deliveryCollection.InsertOne(ctx, deli)
 	if err != nil {
