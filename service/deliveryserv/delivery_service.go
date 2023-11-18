@@ -3,10 +3,14 @@ package deliveryserv
 import (
 	"context"
 	"delivery-service/adapter/userserv"
+	usersrvDTO "delivery-service/adapter/userserv/dto"
 	"delivery-service/domain/dto"
 	"delivery-service/domain/entities"
 	"delivery-service/domain/repos"
-	"delivery-service/mapper"
+	"delivery-service/pkgs/mapper"
+	"delivery-service/pkgs/message"
+	messageDTO "delivery-service/pkgs/message/dto"
+	"github.com/gofiber/fiber/v2/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -39,17 +43,79 @@ func (dl DeliveryService) GetAllDeliveries(ctx context.Context) (*dto.GetAllDeli
 	return &resp, err
 }
 
+func (dl DeliveryService) GetById(ctx context.Context, id string) (*dto.DeliveryDetail, error) {
+
+	deliveries, err := dl.deliRepo.GetById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp dto.DeliveryDetail
+
+	if err := mapper.BindingStruct(deliveries, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, err
+}
+
+func (dl DeliveryService) GetByUserId(ctx context.Context, userId string) (*dto.DeliveryDetail, error) {
+
+	deliveries, err := dl.deliRepo.GetByUserId(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp dto.DeliveryDetail
+
+	if err := mapper.BindingStruct(deliveries, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, err
+}
 func (dl DeliveryService) CreateDelivery(ctx context.Context, deli *dto.CreateDeliveryRequest) (string, error) {
+
+	req := usersrvDTO.CreateAccountRequest{
+		AuthorizationHeader: usersrvDTO.AuthorizationHeader{BearerToken: deli.BearerToken},
+	}
+	req.Body.FirstName = deli.DeliveryName
+	req.Body.LastName = "Đơn vị vận chuyển"
+	req.Body.PhoneNumber = deli.PhoneNumber
+	req.Body.Email = deli.Email
+	req.Body.Role = usersrvDTO.DELIVERY_ROLE
+
+	resp, err := dl.userService.CreateNewAccount(ctx, &req)
+	if err != nil {
+		return "", err
+	}
+
+	messageDTO := messageDTO.CreateDeliveryAccountMessage{
+		EmailRecipient: resp.Email,
+		Email:          resp.Email,
+		Password:       resp.HashedPassword,
+	}
+
+	err = message.SendEmailMessage(messageDTO)
+	if err != nil {
+		log.Errorf("Sending message account was failed cause:%v", err.Error())
+	}
 
 	entity := entities.Delivery{
 		DeliveryName: deli.DeliveryName,
 		DeliveryCode: deli.DeliveryCode,
 		BaseCost:     deli.BaseCost,
 		Description:  deli.Description,
-		IsActive:     true,
+		OwnerAccount: entities.OwnerAccount{
+			UserID:      resp.Id,
+			PhoneNumber: resp.PhoneNumber,
+			Email:       resp.Email,
+		},
+		IsActive: true,
 	}
 
 	deliId, err := dl.deliRepo.CreateDelivery(ctx, &entity)
+
 	if err != nil {
 		return "", err
 	}

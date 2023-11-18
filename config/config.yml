@@ -1,0 +1,32 @@
+Mongodb:
+  ConnectionString: mongodb://localhost:27017
+  Address:
+  Username:
+  Password:
+  DbName:
+  ConnectTimeout:
+  MaxConnIdleTime:
+  MinPoolSize:
+  MaxPoolSize:
+
+RabbitMQ:
+  Connection: amqp://guest:guest@localhost:5672/
+  OrderEvent:
+    Exchange: order_exchange
+    RoutingKey: order_created_key
+    Queue: order_created_event_worker
+  EmailEvent:
+    Exchange: email_topic_exchange
+    RoutingKey: email.delivery.register
+  CartEvent:
+    Exchange:
+    RoutingKey:
+    Queue:
+  ConsumerName: delivery_producer
+  ProducerName: delivery_producer
+
+AdapterService:
+  UserService:
+    AuthURL: http://172.20.64.1:8081
+    UserURL: http://172.20.64.1:8181
+    InternalKey:

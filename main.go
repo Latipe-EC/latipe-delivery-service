@@ -4,8 +4,10 @@ import (
 	"context"
 	"delivery-service/adapter/userserv"
 	handler "delivery-service/api"
+	"delivery-service/config"
 	"delivery-service/domain/repos"
 	"delivery-service/middleware"
+	"delivery-service/pkgs/message"
 	"delivery-service/service/deliveryserv"
 	"delivery-service/service/shippingserv"
 	"encoding/json"
@@ -13,24 +15,20 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
-	"os"
 	"time"
 )
 
 func main() {
 	fmt.Printf("Init application\n")
-	//read env
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+	globalCfg, err := config.NewConfig()
+	if err != nil {
+		panic(err.Error())
 	}
-	uri := os.Getenv("MONGODB_URI")
 
 	//create connect to mongo
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(globalCfg.Mongodb.ConnectionString))
 	db := client.Database("latipe_delivery_db")
 	if err != nil {
 		panic(err)
@@ -40,6 +38,11 @@ func main() {
 			panic(err)
 		}
 	}()
+
+	err = message.InitWorkerProducer(globalCfg)
+	if err != nil {
+		panic(err.Error())
+	}
 
 	//create instance fiber
 	app := fiber.New(fiber.Config{
@@ -62,7 +65,7 @@ func main() {
 	deliveryRepo := repos.NewDeliveryRepos(db)
 
 	//service
-	userServ := userserv.NewUserService(cli)
+	userServ := userserv.NewUserService(cli, globalCfg)
 	shippingServ := shippingserv.NewShippingCostService(&provinceRepo, &userServ, &deliveryRepo)
 	deliveryServ := deliveryserv.NewDeliveryService(&userServ, &deliveryRepo)
 
@@ -76,23 +79,26 @@ func main() {
 
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
+	deli := v1.Group("/delivery")
 
-	local := v1.Group("/vn-local")
+	delivery := deli.Group("/admin", authMiddleware.RequiredRoles([]string{"ADMIN"}))
+	delivery.Get("", deliveryApi.GetAllDeliveries)
+	delivery.Get("/:id", deliveryApi.GetDeliveryID)
+	delivery.Post("", deliveryApi.CreateDelivery)
+	delivery.Patch("/:id", deliveryApi.UpdateDelivery)
+	delivery.Patch("/:id/status", deliveryApi.UpdateStatusDelivery)
+
+	local := deli.Group("/vn-location")
 	local.Get("/province", vietnamProvinceApi.GetAllProvince)
 	local.Get("/district/:id", vietnamProvinceApi.GetAllDistrictByProvince)
 	local.Get("/ward/:id", vietnamProvinceApi.GetAllWardByDistrict)
 
-	shipping := v1.Group("/shipping")
+	shipping := deli.Group("/shipping")
+	shipping.Post("/anonymous", shippingApi.CalculateShippingByProvinceCode)
+	shipping.Post("/order", shippingApi.CalculateOrderShippingCost)
 
-	cost := shipping.Group("/cost")
-	cost.Post("/anonymous", shippingApi.CalculateShippingByProvinceCode)
-	cost.Post("/order", shippingApi.CalculateOrderShippingCost)
-
-	delivery := v1.Group("/delivery", authMiddleware.RequiredRoles([]string{"ADMIN", "USER", "VENDOR"}))
-	delivery.Get("", deliveryApi.GetAllDeliveries)
-	delivery.Post("", deliveryApi.CreateDelivery)
-	delivery.Patch("/:id", deliveryApi.UpdateDelivery)
-	delivery.Patch("/:id/status", deliveryApi.UpdateStatusDelivery)
+	validate := deli.Group("/validate", authMiddleware.RequiredRoles([]string{"DELIVERY"}))
+	validate.Get("", deliveryApi.GetDeliveryByToken)
 
 	err = app.Listen(":5005")
 	if err != nil {

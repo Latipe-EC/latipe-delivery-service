@@ -1,7 +1,7 @@
 package dto
 
 type AuthorizationHeader struct {
-	BearerToken string `reqHeader:"Authorization" json:"bearer_token"`
+	BearerToken string `reqHeader:"Authorization"`
 }
 
 type BaseResponse struct {

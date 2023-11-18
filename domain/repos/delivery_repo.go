@@ -23,7 +23,19 @@ func (dr DeliveryRepos) GetById(ctx context.Context, deliId string) (*entities.D
 	var entity entities.Delivery
 	id, _ := primitive.ObjectIDFromHex(deliId)
 
-	err := dr.deliveryCollection.FindOne(ctx, entities.Delivery{ID: id}).Decode(&entity)
+	err := dr.deliveryCollection.FindOne(ctx, bson.M{"_id": id}).Decode(&entity)
+	if err != nil {
+		return nil, err
+	}
+
+	return &entity, err
+}
+
+func (dr DeliveryRepos) GetByUserId(ctx context.Context, userId string) (*entities.Delivery, error) {
+	var entity entities.Delivery
+	filter := bson.M{"owner_account.user_id": userId}
+
+	err := dr.deliveryCollection.FindOne(ctx, filter).Decode(&entity)
 	if err != nil {
 		return nil, err
 	}

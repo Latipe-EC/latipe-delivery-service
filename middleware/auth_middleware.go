@@ -16,7 +16,7 @@ func NewAuthMiddleware(service *userserv.UserService) *AuthMiddleware {
 	return &AuthMiddleware{userServ: service}
 }
 
-func (auth AuthMiddleware) RequiredRoles(roles []string, option ...int) fiber.Handler {
+func (auth AuthMiddleware) RequiredRoles(roles []string) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		bearToken := ctx.Get("Authorization")
 		if bearToken == "" {
@@ -31,6 +31,9 @@ func (auth AuthMiddleware) RequiredRoles(roles []string, option ...int) fiber.Ha
 		if err != nil {
 			return ctx.Status(http.StatusInternalServerError).SendString("Internal Server Error")
 		}
+
+		ctx.Locals(BEARER_TOKEN, bearToken)
+		ctx.Locals(USER_ID, resp.Id)
 
 		for _, i := range roles {
 			if i == resp.Role {

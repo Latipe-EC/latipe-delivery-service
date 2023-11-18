@@ -2,8 +2,8 @@ package api
 
 import (
 	"delivery-service/domain/dto"
+	"delivery-service/pkgs/valid"
 	"delivery-service/service/shippingserv"
-	"delivery-service/valid"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/log"
 	"net/http"

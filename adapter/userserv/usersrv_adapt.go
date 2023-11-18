@@ -3,7 +3,8 @@ package userserv
 import (
 	"context"
 	"delivery-service/adapter/userserv/dto"
-	"delivery-service/mapper"
+	"delivery-service/config"
+	"delivery-service/pkgs/mapper"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,20 +12,18 @@ import (
 	"github.com/gofiber/fiber/v2/log"
 )
 
-const userServHost = "http://localhost:5000"
-const authServHost = "http://172.20.64.1:8081"
-
 type UserService struct {
 	restyClient *resty.Client
+	config      *config.Config
 }
 
-func NewUserService(client *resty.Client) UserService {
-	return UserService{restyClient: client}
+func NewUserService(client *resty.Client, cfg *config.Config) UserService {
+	return UserService{restyClient: client, config: cfg}
 }
 
 func (us UserService) GetAddressById(ctx context.Context, request *dto.GetAddressRequest) (*dto.GetAddressResponse, error) {
 	resp, err := us.restyClient.
-		SetBaseURL(userServHost).
+		SetBaseURL(us.config.AdapterService.UserService.UserURL).
 		R().
 		SetContext(ctx).
 		SetDebug(false).
@@ -52,7 +51,7 @@ func (us UserService) GetAddressById(ctx context.Context, request *dto.GetAddres
 
 func (us UserService) Authorization(ctx context.Context, req *dto.AuthorizationRequest) (*dto.AuthorizationResponse, error) {
 	resp, err := us.restyClient.
-		SetBaseURL(authServHost).
+		SetBaseURL(us.config.AdapterService.UserService.AuthURL).
 		R().
 		SetBody(req).
 		SetContext(ctx).
@@ -73,6 +72,41 @@ func (us UserService) Authorization(ctx context.Context, req *dto.AuthorizationR
 
 	if err := json.Unmarshal(resp.Body(), &regResp); err != nil {
 		log.Errorf("[%s] [Authorize token]: %s", "ERROR", err)
+		return nil, err
+	}
+
+	return regResp, nil
+}
+
+func (us UserService) CreateNewAccount(ctx context.Context, req *dto.CreateAccountRequest) (*dto.CreateAccountResponse, error) {
+	resp, err := us.restyClient.
+		SetBaseURL(us.config.AdapterService.UserService.UserURL).
+		R().
+		SetBody(req.Body).
+		SetContext(ctx).
+		SetDebug(true).
+		SetHeader("Authorization", fmt.Sprintf("Bearer %v", req.BearerToken)).
+		Post(req.URL())
+
+	if err != nil {
+		log.Errorf("[Create account]: %s", err)
+		return nil, err
+	}
+
+	if resp.StatusCode() >= 500 {
+		log.Errorf("[Create account]: %s", resp.Body())
+		return nil, errors.New("internal server error")
+	}
+
+	if resp.StatusCode() >= 400 {
+		log.Errorf(" [Create account]: %s", resp.Body())
+		return nil, errors.New("bad request error")
+	}
+
+	var regResp *dto.CreateAccountResponse
+
+	if err := json.Unmarshal(resp.Body(), &regResp); err != nil {
+		log.Errorf("[Create account]: %s", err)
 		return nil, err
 	}
 
