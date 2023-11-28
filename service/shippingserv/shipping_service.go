@@ -7,6 +7,7 @@ import (
 	"delivery-service/domain/entities"
 	"delivery-service/domain/repos"
 	"errors"
+	"time"
 )
 
 type ShippingCostService struct {
@@ -27,7 +28,12 @@ func NewShippingCostService(provinceRepo *repos.ProvinceRepository, userService 
 func (sh ShippingCostService) CalculateByProvinceCode(ctx context.Context,
 	req *dto.CalculateShippingCostRequest) ([]*dto.CalculateShippingCostShipping, error) {
 
-	src := sh.provinceRepo.GetByKey(req.SrcCode)
+	var storeLocation []entities.ProvinceDetail
+	for _, i := range req.SrcCode {
+		src := sh.provinceRepo.GetByKey(i)
+		storeLocation = append(storeLocation, src)
+	}
+
 	dest := sh.provinceRepo.GetByKey(req.DestCode)
 
 	deliveries, err := sh.deliRepo.GetAll(ctx)
@@ -35,19 +41,26 @@ func (sh ShippingCostService) CalculateByProvinceCode(ctx context.Context,
 		return nil, err
 	}
 
-	if src.Code == "" || dest.Code == "" || len(deliveries) == 0 {
+	if len(req.SrcCode) < 1 || dest.Code == "" || len(deliveries) == 0 {
 		return nil, errors.New("not found")
 	}
 
 	var resp []*dto.CalculateShippingCostShipping
 	for _, deli := range deliveries {
 		if deli.IsActive != false {
-			cost, receive := CalculateShippingCodes(src.Code, dest.Code, deli.BaseCost)
+			cost := 0
+			var receive time.Time
+			for _, i := range storeLocation {
+				c, r := CalculateShippingCodes(i.Code, dest.Code, deli.BaseCost)
+				cost += c
+				receive = r
+			}
+
 			layout := "2006-01-02"
 			formattedTime := receive.Format(layout)
 
 			data := dto.CalculateShippingCostShipping{
-				SrcCode:      src.Code,
+				SrcCode:      req.SrcCode,
 				DestCode:     dest.Code,
 				ReceiveDate:  formattedTime,
 				DeliveryId:   deli.ID.Hex(),
@@ -86,16 +99,14 @@ func (sh ShippingCostService) CalculateOrderShippingCost(ctx context.Context,
 		DeliveryName: delivery.DeliveryName,
 	}
 
-	maxCost := 0
+	cost := 0
 	for _, i := range storeLocation {
-		cost, receive := CalculateShippingCodes(dest.Code, i.Code, delivery.BaseCost)
-		if cost > maxCost {
-			maxCost = cost
-			formattedTime := receive.Format("2006-01-02")
-			data.Cost = maxCost
-			data.ReceiveDate = formattedTime
-		}
+		c, receive := CalculateShippingCodes(dest.Code, i.Code, delivery.BaseCost)
+		cost += c
+		formattedTime := receive.Format("2006-01-02")
+		data.ReceiveDate = formattedTime
 	}
+	data.Cost = cost
 
 	return &data, err
 }
