@@ -8,9 +8,6 @@ import (
 	"delivery-service/domain/entities"
 	"delivery-service/domain/repos"
 	"delivery-service/pkgs/mapper"
-	"delivery-service/pkgs/message"
-	messageDTO "delivery-service/pkgs/message/dto"
-	"github.com/gofiber/fiber/v2/log"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -88,17 +85,6 @@ func (dl DeliveryService) CreateDelivery(ctx context.Context, deli *dto.CreateDe
 	resp, err := dl.userService.CreateNewAccount(ctx, &req)
 	if err != nil {
 		return "", err
-	}
-
-	messageDTO := messageDTO.CreateDeliveryAccountMessage{
-		EmailRecipient: resp.Email,
-		Email:          resp.Email,
-		Password:       resp.HashedPassword,
-	}
-
-	err = message.SendEmailMessage(messageDTO)
-	if err != nil {
-		log.Errorf("Sending message account was failed cause:%v", err.Error())
 	}
 
 	entity := entities.Delivery{
