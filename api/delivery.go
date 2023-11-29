@@ -7,6 +7,7 @@ import (
 	"delivery-service/service/deliveryserv"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 )
 
@@ -169,6 +170,12 @@ func (receiver DeliveryHandle) GetDeliveryByToken(ctx *fiber.Ctx) error {
 			Success: false,
 			Message: "",
 		}
+
+		if err == mongo.ErrNoDocuments {
+			resp.Message = "not found"
+			return ctx.Status(http.StatusNotFound).JSON(resp)
+		}
+
 		return ctx.Status(http.StatusInternalServerError).JSON(resp)
 	}
 

@@ -18,7 +18,7 @@ type Delivery struct {
 }
 
 type OwnerAccount struct {
-	UserID      string `json:"id,omitempty" bson:"id,omitempty"`
+	UserID      string `json:"id,omitempty" bson:"user_id_id,omitempty"`
 	PhoneNumber string `json:"phone_number,omitempty" bson:"phone_number,omitempty"`
 	Email       string `json:"email,omitempty" bson:"email,omitempty"`
 }
