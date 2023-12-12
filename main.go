@@ -28,7 +28,9 @@ func main() {
 	}
 
 	//create connect to mongo
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(globalCfg.Mongodb.ConnectionString))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(globalCfg.Mongodb.ConnectionString).
+		SetConnectTimeout(globalCfg.Mongodb.ConnectTimeout*time.Second).
+		SetMaxPoolSize(globalCfg.Mongodb.MaxPoolSize))
 	db := client.Database("latipe_delivery_db")
 	if err != nil {
 		panic(err)

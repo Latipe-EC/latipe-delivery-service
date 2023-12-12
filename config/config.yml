@@ -1,13 +1,13 @@
 Mongodb:
-  ConnectionString: mongodb://localhost:27017
+  ConnectionString: mongodb+srv://doadmin:Ph8916Sk2J40Ei7G@db-mongodb-sgp1-16123-74037e88.mongo.ondigitalocean.com/
   Address:
   Username:
   Password:
   DbName:
-  ConnectTimeout:
+  ConnectTimeout: 5
   MaxConnIdleTime:
   MinPoolSize:
-  MaxPoolSize:
+  MaxPoolSize: 20
 
 RabbitMQ:
   Connection: amqp://guest:guest@localhost:5672/
