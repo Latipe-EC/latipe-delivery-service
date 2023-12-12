@@ -27,6 +27,6 @@ RabbitMQ:
 
 AdapterService:
   UserService:
-    AuthURL: http://172.20.64.1:8081
-    UserURL: http://172.20.64.1:8181
+    AuthURL: http://localhost::8081
+    UserURL: http://localhost::8181
     InternalKey:
