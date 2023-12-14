@@ -42,7 +42,7 @@ func (us UserService) GetAddressById(ctx context.Context, request *dto.GetAddres
 	var regResp *dto.GetAddressResponse
 	err = mapper.BindingStruct(resp.Body(), &regResp)
 	if err != nil {
-		log.Errorf("[%s] [Get product]: %s", "ERROR", err)
+		log.Errorf("[%s] [Get address]: %s", "ERROR", err)
 		return nil, err
 	}
 
