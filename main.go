@@ -12,6 +12,7 @@ import (
 	"delivery-service/service/shippingserv"
 	"encoding/json"
 	"fmt"
+	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/go-resty/resty/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -54,6 +55,20 @@ func main() {
 		JSONEncoder:  json.Marshal,
 	})
 	app.Use(logger.New())
+	prometheus := fiberprometheus.New("delivery_service")
+	prometheus.RegisterAt(app, "/metrics")
+	app.Use(prometheus.Middleware)
+
+	app.Get("/", func(ctx *fiber.Ctx) error {
+		s := struct {
+			Message string `json:"message"`
+			Version string `json:"version"`
+		}{
+			Message: "Delivery service was developed by TienDat",
+			Version: "v0.0.1",
+		}
+		return ctx.JSON(s)
+	})
 
 	//create instance resty-go
 	cli := resty.New().
