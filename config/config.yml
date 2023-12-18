@@ -1,5 +1,5 @@
 Mongodb:
-  ConnectionString: mongodb+srv://doadmin:juW439670bv1geP5@db-mongodb-sgp1-16123-74037e88.mongo.ondigitalocean.com/
+  ConnectionString: mongodb://localhost:27017
   Address:
   Username:
   Password:
@@ -27,6 +27,6 @@ RabbitMQ:
 
 AdapterService:
   UserService:
-    AuthURL: http://172.20.64.1:8081
-    UserURL: http://172.20.64.1:8181
+    AuthURL: http://localhost:8081
+    UserURL: http://localhost:8181
     InternalKey:
