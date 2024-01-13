@@ -76,9 +76,9 @@ func main() {
 		SetTimeout(5 * time.Second)
 
 	//repository
-	provinceRepo := repos.InitProvinceRepository()
-	districtRepo := repos.InitDistrictRepository()
-	wardRepo := repos.InitWardRepository()
+	provinceRepo := repos.InitProvinceRepository(false)
+	districtRepo := repos.InitDistrictRepository(false)
+	wardRepo := repos.InitWardRepository(false)
 	deliveryRepo := repos.NewDeliveryRepos(db)
 
 	//service

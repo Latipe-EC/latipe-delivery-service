@@ -7,8 +7,14 @@ import (
 	"os"
 )
 
-func InitProvinceRepository() ProvinceRepository {
-	file, err := os.Open("./data/vn_data/province.json")
+func InitProvinceRepository(opt bool, optPath ...string) ProvinceRepository {
+
+	path := "./data/vn_data/province.json" //default
+	if len(optPath) > 0 && opt == true {
+		path = optPath[0]
+	}
+
+	file, err := os.Open(path)
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
 	}
@@ -36,8 +42,13 @@ func InitProvinceRepository() ProvinceRepository {
 	return repos
 }
 
-func InitDistrictRepository() DistrictRepos {
-	file, err := os.Open("./data/vn_data/district.json")
+func InitDistrictRepository(opt bool, optPath ...string) DistrictRepos {
+	path := "/data/vn_data/district.json" //default
+	if len(optPath) > 0 && opt == true {
+		path = optPath[0]
+	}
+
+	file, err := os.Open(path)
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
 	}
@@ -64,8 +75,13 @@ func InitDistrictRepository() DistrictRepos {
 	return repos
 }
 
-func InitWardRepository() WardRepos {
-	file, err := os.Open("./data/vn_data/ward.json")
+func InitWardRepository(opt bool, optPath ...string) WardRepos {
+	path := "./data/vn_data/ward.json" //default
+	if len(optPath) > 0 && opt == true {
+		path = optPath[0]
+	}
+
+	file, err := os.Open(path)
 	if err != nil {
 		log.Fatalf("Error opening file: %v", err)
 	}
