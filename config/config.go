@@ -2,18 +2,45 @@ package config
 
 import (
 	"errors"
+	"github.com/google/wire"
 	"github.com/spf13/viper"
 	"log"
 	"os"
 	"time"
 )
 
+var Set = wire.NewSet(NewConfig)
+
 type Config struct {
-	AdapterService AdapterService
-	RabbitMQ       RabbitMQ
-	Mongodb        Mongodb
+	Server              Server
+	AdapterService      AdapterService
+	RabbitMQ            RabbitMQ
+	Mongodb             Mongodb
+	VietNamLocationData VietNamLocationData
 }
 
+type Server struct {
+	Name                string
+	ApiHeaderKey        string
+	AppVersion          string
+	Port                string
+	BaseURI             string
+	Mode                string
+	ReadTimeout         time.Duration
+	WriteTimeout        time.Duration
+	SSL                 bool
+	CtxDefaultTimeout   int
+	CSRF                bool
+	Debug               bool
+	MaxCountRequest     int           // max count of connections
+	ExpirationLimitTime time.Duration //  expiration time of the limit
+}
+
+type VietNamLocationData struct {
+	ProvincePath string
+	DistrictPath string
+	WardPath     string
+}
 type Mongodb struct {
 	ConnectionString string
 	Address          string
@@ -27,17 +54,18 @@ type Mongodb struct {
 }
 
 type RabbitMQ struct {
-	Connection   string
-	EmailEvent   EmailEvent
-	ConsumerName string
-	ProducerName string
+	Connection          string
+	EmailEvent          EmailEvent
+	CreatePurchaseEvent PurchaseEvent
+	ConsumerName        string
+	ProducerName        string
 }
 
-type OrderEvent struct {
-	Connection string
-	Exchange   string
-	RoutingKey string
-	Queue      string
+type PurchaseEvent struct {
+	Exchange           string
+	CommitRoutingKey   string
+	RollbackRoutingKey string
+	ReplyRoutingKey    string
 }
 
 type EmailEvent struct {

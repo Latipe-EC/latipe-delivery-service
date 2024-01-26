@@ -1,9 +1,29 @@
+Server:
+  Name: "Deliver Service APIs"
+  AppVersion: 1.0.1
+  ApiHeaderKey: ccfe5596a56098c7a38b06dc42d0ec409bbab643bce1ea4007b4201d26fd056d
+  BaseURI: 127.0.0.1:5000
+  Port: :5005
+  Mode: local
+  ReadTimeout: 5s
+  WriteTimeout: 5s
+  SSL: true
+  CtxDefaultTimeout: 5
+  ExpirationLimitTime: 30s
+
+VietNamLocationData:
+  ProvincePath: "./config/vietnam_location/province.json"
+  DistrictPath: "./config/vietnam_location/district.json"
+  WardPath: "./config/vietnam_location/ward.json"
+
+
+DB:
 Mongodb:
   ConnectionString: mongodb://localhost:27017
   Address:
   Username:
   Password:
-  DbName:
+  DbName: latipe_delivery_db
   ConnectTimeout: 5
   MaxConnIdleTime:
   MinPoolSize:
