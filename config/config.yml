@@ -2,8 +2,8 @@ Server:
   Name: "Deliver Service APIs"
   AppVersion: 1.0.1
   ApiHeaderKey: ccfe5596a56098c7a38b06dc42d0ec409bbab643bce1ea4007b4201d26fd056d
-  BaseURI: 127.0.0.1:5000
-  Port: :5010
+  BaseURI: 127.0.0.1:5005
+  Port: :5005
   Mode: local
   ReadTimeout: 5s
   WriteTimeout: 5s
