@@ -12,10 +12,14 @@ import (
 	"delivery-service/internal/api"
 	"delivery-service/internal/domain/repos"
 	"delivery-service/internal/middleware"
+	"delivery-service/internal/publisher"
 	"delivery-service/internal/router"
 	"delivery-service/internal/service/deliveryserv"
+	"delivery-service/internal/service/packageserv"
 	"delivery-service/internal/service/shippingserv"
+	"delivery-service/internal/subscribers"
 	"delivery-service/pkgs/mongodb"
+	"delivery-service/pkgs/rabbitclient"
 	"delivery-service/pkgs/resty"
 	"encoding/json"
 	"github.com/ansrivas/fiberprometheus/v2"
@@ -48,19 +52,26 @@ func New() (*Server, error) {
 	vietNamProvinceHandle := api.NewVietNamProvinceHandle(provinceRepository, districtRepos, wardRepos)
 	authMiddleware := middleware.NewAuthMiddleware(userService)
 	routerHandler := router.NewRouterHandler(deliveryHandle, shippingHandle, vietNamProvinceHandle, authMiddleware)
-	server := NewServer(configConfig, routerHandler)
+	connection := rabbitclient.NewRabbitClientConnection(configConfig)
+	shippingPackageRepos := repos.NewShippingPackageRepos(mongoClient)
+	replyPurchasePublisher := publisher.NewReplyPurchasePublisher(configConfig, connection)
+	shippingPackageService := packageserv.NewShippingPackageService(deliveryRepos, shippingPackageRepos, replyPurchasePublisher)
+	purchaseCreatedSub := subscribers.NewPurchaseCreatedSub(configConfig, connection, shippingPackageService)
+	server := NewServer(configConfig, routerHandler, purchaseCreatedSub)
 	return server, nil
 }
 
 // server.go:
 
 type Server struct {
-	app       *fiber.App
-	globalCfg *config.Config
+	globalCfg   *config.Config
+	app         *fiber.App
+	purchaseSub *subscribers.PurchaseCreatedSub
 }
 
 func NewServer(
-	cfg *config.Config, router2 *router.RouterHandler) *Server {
+	cfg *config.Config, router2 *router.RouterHandler,
+	purchaseSub *subscribers.PurchaseCreatedSub) *Server {
 
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  5 * time.Second,
@@ -91,9 +102,14 @@ func NewServer(
 		InitRouter(&v1)
 
 	return &Server{
-		globalCfg: cfg,
-		app:       app,
+		globalCfg:   cfg,
+		app:         app,
+		purchaseSub: purchaseSub,
 	}
+}
+
+func (serv Server) PurchaseCreatedSub() *subscribers.PurchaseCreatedSub {
+	return serv.purchaseSub
 }
 
 func (serv Server) App() *fiber.App {

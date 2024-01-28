@@ -15,8 +15,10 @@ func main() {
 		log.Fatalf("%s", err)
 	}
 
-	//subscriber
 	var wg sync.WaitGroup
+	//subscriber
+	wg.Add(1)
+	go serv.PurchaseCreatedSub().ListenPurchaseEvent(&wg)
 
 	//api handler
 	wg.Add(1)

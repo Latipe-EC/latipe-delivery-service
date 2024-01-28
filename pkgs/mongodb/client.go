@@ -3,7 +3,9 @@ package mongodb
 import (
 	"context"
 	"delivery-service/config"
+	"fmt"
 	"github.com/gofiber/fiber/v2/log"
+	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -19,14 +21,21 @@ type MongoClient struct {
 func OpenMongoDBConnection(cfg *config.Config) (*MongoClient, error) {
 	ctx := context.Background()
 
-	client, err := mongo.Connect(ctx,
-		options.Client().ApplyURI(cfg.Mongodb.ConnectionString).
-			SetAuth(options.Credential{
-				Username: cfg.Mongodb.Username,
-				Password: cfg.Mongodb.Password,
-			}).
-			SetConnectTimeout(cfg.Mongodb.ConnectTimeout).
-			SetMaxPoolSize(cfg.Mongodb.MaxPoolSize))
+	monitor := &event.CommandMonitor{
+		Started: func(ctx context.Context, e *event.CommandStartedEvent) {
+			fmt.Println(e.Command)
+		},
+		Succeeded: func(ctx context.Context, e *event.CommandSucceededEvent) {
+
+		},
+		Failed: func(ctx context.Context, failedEvent *event.CommandFailedEvent) {
+			fmt.Println(failedEvent.Failure)
+		},
+	}
+
+	opts := options.Client().SetMonitor(monitor)
+
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(cfg.Mongodb.ConnectionString), opts)
 	if err != nil {
 		return nil, err
 	}

@@ -9,9 +9,12 @@ import (
 	"delivery-service/internal/api"
 	"delivery-service/internal/domain/repos"
 	"delivery-service/internal/middleware"
+	"delivery-service/internal/publisher"
 	"delivery-service/internal/router"
 	"delivery-service/internal/service"
+	"delivery-service/internal/subscribers"
 	"delivery-service/pkgs/mongodb"
+	"delivery-service/pkgs/rabbitclient"
 	restyclient "delivery-service/pkgs/resty"
 	"encoding/json"
 	"github.com/ansrivas/fiberprometheus/v2"
@@ -22,8 +25,9 @@ import (
 )
 
 type Server struct {
-	app       *fiber.App
-	globalCfg *config.Config
+	globalCfg   *config.Config
+	app         *fiber.App
+	purchaseSub *subscribers.PurchaseCreatedSub
 }
 
 func New() (*Server, error) {
@@ -31,7 +35,10 @@ func New() (*Server, error) {
 		NewServer,
 		config.Set,
 		restyclient.Set,
+		rabbitclient.Set,
 		mongodb.Set,
+		publisher.Set,
+		subscribers.Set,
 		repos.Set,
 		adapter.Set,
 		service.Set,
@@ -43,7 +50,8 @@ func New() (*Server, error) {
 
 func NewServer(
 	cfg *config.Config,
-	router *router.RouterHandler) *Server {
+	router *router.RouterHandler,
+	purchaseSub *subscribers.PurchaseCreatedSub) *Server {
 
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  5 * time.Second,
@@ -76,9 +84,14 @@ func NewServer(
 	router.InitRouter(&v1)
 
 	return &Server{
-		globalCfg: cfg,
-		app:       app,
+		globalCfg:   cfg,
+		app:         app,
+		purchaseSub: purchaseSub,
 	}
+}
+
+func (serv Server) PurchaseCreatedSub() *subscribers.PurchaseCreatedSub {
+	return serv.purchaseSub
 }
 
 func (serv Server) App() *fiber.App {

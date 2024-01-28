@@ -71,6 +71,7 @@ func (dl DeliveryService) GetByUserId(ctx context.Context, userId string) (*dto2
 
 	return &resp, err
 }
+
 func (dl DeliveryService) CreateDelivery(ctx context.Context, deli *dto2.CreateDeliveryRequest) (string, error) {
 
 	req := dto.CreateAccountRequest{

@@ -7,4 +7,5 @@ var Set = wire.NewSet(
 	InitProvinceRepository,
 	InitDistrictRepository,
 	NewDeliveryRepos,
+	NewShippingPackageRepos,
 )

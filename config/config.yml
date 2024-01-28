@@ -3,7 +3,7 @@ Server:
   AppVersion: 1.0.1
   ApiHeaderKey: ccfe5596a56098c7a38b06dc42d0ec409bbab643bce1ea4007b4201d26fd056d
   BaseURI: 127.0.0.1:5000
-  Port: :5005
+  Port: :5010
   Mode: local
   ReadTimeout: 5s
   WriteTimeout: 5s
@@ -19,22 +19,25 @@ VietNamLocationData:
 
 DB:
 Mongodb:
-  ConnectionString: mongodb://localhost:27017
+  ConnectionString: mongodb://localhost:27017/
   Address:
   Username:
   Password:
   DbName: latipe_delivery_db
-  ConnectTimeout: 5
+  ConnectTimeout: 10
   MaxConnIdleTime:
   MinPoolSize:
   MaxPoolSize: 20
 
 RabbitMQ:
+  ServiceName: delivery_service
   Connection: amqp://guest:guest@localhost:5672/
-  OrderEvent:
-    Exchange: order_exchange
-    RoutingKey: order_created_key
-    Queue: order_created_event_worker
+  CreatePurchaseEvent:
+    Exchange: order_transaction_ex
+    CommitRoutingKey: order.delivery.create
+    RollbackRoutingKey: order.delivery.rollback
+    ReplyRoutingKey: order.delivery.reply
+
   EmailEvent:
     Exchange: email_topic_exchange
     RoutingKey: email.delivery.register
@@ -42,8 +45,6 @@ RabbitMQ:
     Exchange:
     RoutingKey:
     Queue:
-  ConsumerName: delivery_producer
-  ProducerName: delivery_producer
 
 AdapterService:
   UserService:

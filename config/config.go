@@ -57,8 +57,7 @@ type RabbitMQ struct {
 	Connection          string
 	EmailEvent          EmailEvent
 	CreatePurchaseEvent PurchaseEvent
-	ConsumerName        string
-	ProducerName        string
+	ServiceName         string
 }
 
 type PurchaseEvent struct {
