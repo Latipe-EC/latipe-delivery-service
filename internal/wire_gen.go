@@ -11,6 +11,8 @@ import (
 	"delivery-service/internal/adapter/userserv"
 	"delivery-service/internal/api"
 	"delivery-service/internal/domain/repos"
+	"delivery-service/internal/grpc-service/interceptor"
+	"delivery-service/internal/grpc-service/protobuf/deliveryGrpc"
 	"delivery-service/internal/middleware"
 	"delivery-service/internal/publisher"
 	"delivery-service/internal/router"
@@ -25,6 +27,9 @@ import (
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"log"
 	"time"
 )
 
@@ -52,12 +57,13 @@ func New() (*Server, error) {
 	vietNamProvinceHandle := api.NewVietNamProvinceHandle(provinceRepository, districtRepos, wardRepos)
 	authMiddleware := middleware.NewAuthMiddleware(userService)
 	routerHandler := router.NewRouterHandler(deliveryHandle, shippingHandle, vietNamProvinceHandle, authMiddleware)
+	deliveryServiceGRPCServer := deliveryGrpc.NewDeliveryServerGRPC(shippingCostService)
 	connection := rabbitclient.NewRabbitClientConnection(configConfig)
 	shippingPackageRepos := repos.NewShippingPackageRepos(mongoClient)
 	replyPurchasePublisher := publisher.NewReplyPurchasePublisher(configConfig, connection)
 	shippingPackageService := packageserv.NewShippingPackageService(deliveryRepos, shippingPackageRepos, replyPurchasePublisher)
 	purchaseCreatedSub := subscribers.NewPurchaseCreatedSub(configConfig, connection, shippingPackageService)
-	server := NewServer(configConfig, routerHandler, purchaseCreatedSub)
+	server := NewServer(configConfig, routerHandler, deliveryServiceGRPCServer, purchaseCreatedSub)
 	return server, nil
 }
 
@@ -66,11 +72,13 @@ func New() (*Server, error) {
 type Server struct {
 	globalCfg   *config.Config
 	app         *fiber.App
+	grpcServ    *grpc.Server
 	purchaseSub *subscribers.PurchaseCreatedSub
 }
 
 func NewServer(
 	cfg *config.Config, router2 *router.RouterHandler,
+	deliServ deliveryGrpc.DeliveryServiceGRPCServer,
 	purchaseSub *subscribers.PurchaseCreatedSub) *Server {
 
 	app := fiber.New(fiber.Config{
@@ -101,10 +109,18 @@ func NewServer(
 	router2.
 		InitRouter(&v1)
 
+	creds, err := credentials.NewServerTLSFromFile("./server.crt", "./server.key")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	grpcServ := grpc.NewServer(grpc.Creds(creds), grpc.UnaryInterceptor(interceptor.MiddlewareUnaryRequest))
+	deliveryGrpc.RegisterDeliveryServiceGRPCServer(grpcServ, deliServ)
 	return &Server{
 		globalCfg:   cfg,
 		app:         app,
 		purchaseSub: purchaseSub,
+		grpcServ:    grpcServ,
 	}
 }
 
@@ -118,4 +134,8 @@ func (serv Server) App() *fiber.App {
 
 func (serv Server) Config() *config.Config {
 	return serv.globalCfg
+}
+
+func (serv Server) DeliServ() *grpc.Server {
+	return serv.grpcServ
 }

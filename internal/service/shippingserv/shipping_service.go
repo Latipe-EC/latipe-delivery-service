@@ -77,12 +77,7 @@ func (sh ShippingCostService) CalculateByProvinceCode(ctx context.Context,
 func (sh ShippingCostService) CalculateOrderShippingCost(ctx context.Context,
 	req *dto.OrderShippingCostRequest) (*dto.CalculateShippingCostShipping, error) {
 
-	var storeLocation []entities.ProvinceDetail
-	for _, i := range req.SrcCode {
-		src := sh.provinceRepo.GetByKey(i)
-		storeLocation = append(storeLocation, src)
-	}
-
+	src := sh.provinceRepo.GetByKey(req.SrcCode)
 	dest := sh.provinceRepo.GetByKey(req.DestCode)
 
 	delivery, err := sh.deliRepo.GetById(ctx, req.DeliveryId)
@@ -90,7 +85,7 @@ func (sh ShippingCostService) CalculateOrderShippingCost(ctx context.Context,
 		return nil, err
 	}
 
-	if len(storeLocation) < 1 || dest.Code == "" || delivery == nil || delivery.IsActive == false {
+	if delivery == nil || delivery.IsActive == false {
 		return nil, errors.New("not found")
 	}
 
@@ -99,14 +94,11 @@ func (sh ShippingCostService) CalculateOrderShippingCost(ctx context.Context,
 		DeliveryName: delivery.DeliveryName,
 	}
 
-	cost := 0
-	for _, i := range storeLocation {
-		c, receive := CalculateShippingCodes(dest.Code, i.Code, delivery.BaseCost)
-		cost += c
-		formattedTime := receive.Format("2006-01-02")
-		data.ReceiveDate = formattedTime
-	}
-	data.Cost = cost
+	c, receive := CalculateShippingCodes(dest.Code, src.Code, delivery.BaseCost)
+	formattedTime := receive.Format("2006-01-02")
+	data.ReceiveDate = formattedTime
+
+	data.Cost = c
 
 	return &data, err
 }

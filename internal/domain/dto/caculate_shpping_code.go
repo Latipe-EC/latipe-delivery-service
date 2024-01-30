@@ -6,9 +6,9 @@ type CalculateShippingCostRequest struct {
 }
 
 type OrderShippingCostRequest struct {
-	SrcCode    []string `json:"src_code" validate:"required"`
-	DestCode   string   `json:"dest_code" validate:"required"`
-	DeliveryId string   `json:"delivery_id" validate:"required"`
+	SrcCode    string `json:"src_code" validate:"required"`
+	DestCode   string `json:"dest_code" validate:"required"`
+	DeliveryId string `json:"delivery_id" validate:"required"`
 }
 
 type CalculateShippingCostShipping struct {

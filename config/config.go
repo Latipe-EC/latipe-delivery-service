@@ -16,6 +16,7 @@ type Config struct {
 	AdapterService      AdapterService
 	RabbitMQ            RabbitMQ
 	Mongodb             Mongodb
+	GRPC                GRPC
 	VietNamLocationData VietNamLocationData
 }
 
@@ -23,7 +24,8 @@ type Server struct {
 	Name                string
 	ApiHeaderKey        string
 	AppVersion          string
-	Port                string
+	RestPort            string
+	GrpcPort            string
 	BaseURI             string
 	Mode                string
 	ReadTimeout         time.Duration
@@ -35,7 +37,9 @@ type Server struct {
 	MaxCountRequest     int           // max count of connections
 	ExpirationLimitTime time.Duration //  expiration time of the limit
 }
-
+type GRPC struct {
+	Connection string
+}
 type VietNamLocationData struct {
 	ProvincePath string
 	DistrictPath string

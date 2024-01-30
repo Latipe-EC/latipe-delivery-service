@@ -13,6 +13,15 @@ setup:
 wire:
 	cd internal/ && wire
 
+protoc:
+	protoc --go_out=. --go_opt=paths=source_relative  --go-grpc_out=. --go-grpc_opt=paths=source_relative .\internal\protobuf\deliveryGrpc\delivery.proto
+
+gen-cert:
+	openssl genrsa -out /cert/server.key 2048
+	openssl req -new -x509 -days 3650 -subj "/C=VN/ST=HoChiMinh/L=HoChiMinh/O=UTE/OU=UTE Education/CN=delivery-services.vn" -addext "subjectAltName=DNS:*.delivery-services.vn,IP:0.0.0.0" -key /cert/server.key -out /cert/server.crt
+	openssl genrsa -out /cert/client.key 2048
+	openssl req -new -x509 -days 3650 -subj "/C=VN/ST=HoChiMinh/L=HoChiMinh/O=UTE/OU=UTE Education/CN=delivery-services.vn" -addext "subjectAltName=DNS:*.delivery-services.vn,IP:0.0.0.0" -key /cert/client.key -out /cert/client.crt
+
 #linux
 # clean build file
 cleanl:
