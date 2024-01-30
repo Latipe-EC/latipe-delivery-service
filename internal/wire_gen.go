@@ -28,8 +28,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"log"
 	"time"
 )
 
@@ -63,7 +61,8 @@ func New() (*Server, error) {
 	replyPurchasePublisher := publisher.NewReplyPurchasePublisher(configConfig, connection)
 	shippingPackageService := packageserv.NewShippingPackageService(deliveryRepos, shippingPackageRepos, replyPurchasePublisher)
 	purchaseCreatedSub := subscribers.NewPurchaseCreatedSub(configConfig, connection, shippingPackageService)
-	server := NewServer(configConfig, routerHandler, deliveryServiceGRPCServer, purchaseCreatedSub)
+	grpcInterceptor := interceptor.NewGrpcInterceptor(configConfig)
+	server := NewServer(configConfig, routerHandler, deliveryServiceGRPCServer, purchaseCreatedSub, grpcInterceptor)
 	return server, nil
 }
 
@@ -79,7 +78,8 @@ type Server struct {
 func NewServer(
 	cfg *config.Config, router2 *router.RouterHandler,
 	deliServ deliveryGrpc.DeliveryServiceGRPCServer,
-	purchaseSub *subscribers.PurchaseCreatedSub) *Server {
+	purchaseSub *subscribers.PurchaseCreatedSub,
+	grpcInterceptor *interceptor.GrpcInterceptor) *Server {
 
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  5 * time.Second,
@@ -109,12 +109,7 @@ func NewServer(
 	router2.
 		InitRouter(&v1)
 
-	creds, err := credentials.NewServerTLSFromFile("./server.crt", "./server.key")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	grpcServ := grpc.NewServer(grpc.Creds(creds), grpc.UnaryInterceptor(interceptor.MiddlewareUnaryRequest))
+	grpcServ := grpc.NewServer(grpc.UnaryInterceptor(grpcInterceptor.MiddlewareUnaryRequest))
 	deliveryGrpc.RegisterDeliveryServiceGRPCServer(grpcServ, deliServ)
 	return &Server{
 		globalCfg:   cfg,

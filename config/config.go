@@ -25,7 +25,6 @@ type Server struct {
 	ApiHeaderKey        string
 	AppVersion          string
 	RestPort            string
-	GrpcPort            string
 	BaseURI             string
 	Mode                string
 	ReadTimeout         time.Duration
@@ -38,7 +37,8 @@ type Server struct {
 	ExpirationLimitTime time.Duration //  expiration time of the limit
 }
 type GRPC struct {
-	Connection string
+	RootAPIKey string
+	Port       string
 }
 type VietNamLocationData struct {
 	ProvincePath string

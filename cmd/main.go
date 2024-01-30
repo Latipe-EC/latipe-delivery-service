@@ -34,8 +34,8 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		log.Infof("GRPC server run on localhost%v", serv.Config().Server.GrpcPort)
-		lis, err := net.Listen("tcp", serv.Config().Server.GrpcPort)
+		log.Infof("GRPC server run on localhost%v", serv.Config().GRPC.Port)
+		lis, err := net.Listen("tcp", serv.Config().GRPC.Port)
 		if err != nil {
 			log.Fatalf("failed to listen: %v\n", err)
 		}
