@@ -97,7 +97,7 @@ func (pb *PurchaseCreatedSub) ListenPurchaseEvent(wg *sync.WaitGroup) {
 
 func (pb *PurchaseCreatedSub) handleMessage(msg amqp.Delivery) error {
 	startTime := time.Now()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	msgDTO := message.CreateOrderMessage{}
