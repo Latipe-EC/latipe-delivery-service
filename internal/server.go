@@ -60,7 +60,7 @@ func New() (*Server, error) {
 func NewServer(
 	cfg *config.Config,
 	router *router.RouterHandler,
-	deliServ deliveryGrpc.DeliveryServiceGRPCServer,
+	deliServ deliveryGrpc.DeliveryServiceServer,
 	purchaseSub *subscribers.PurchaseCreatedSub,
 	grpcInterceptor *interceptor.GrpcInterceptor) *Server {
 
@@ -97,7 +97,7 @@ func NewServer(
 	grpcServ := grpc.NewServer(
 		grpc.UnaryInterceptor(grpcInterceptor.MiddlewareUnaryRequest),
 	)
-	deliveryGrpc.RegisterDeliveryServiceGRPCServer(grpcServ, deliServ)
+	deliveryGrpc.RegisterDeliveryServiceServer(grpcServ, deliServ)
 	return &Server{
 		globalCfg:   cfg,
 		app:         app,

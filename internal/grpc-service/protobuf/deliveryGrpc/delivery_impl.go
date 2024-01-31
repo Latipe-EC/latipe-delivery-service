@@ -13,10 +13,10 @@ import (
 
 type deliveryServer struct {
 	deliService *shippingserv.ShippingCostService
-	UnimplementedDeliveryServiceGRPCServer
+	UnimplementedDeliveryServiceServer
 }
 
-func NewDeliveryServerGRPC(deliService *shippingserv.ShippingCostService) DeliveryServiceGRPCServer {
+func NewDeliveryServerGRPC(deliService *shippingserv.ShippingCostService) DeliveryServiceServer {
 	return &deliveryServer{
 		deliService: deliService,
 	}

@@ -55,14 +55,14 @@ func New() (*Server, error) {
 	vietNamProvinceHandle := api.NewVietNamProvinceHandle(provinceRepository, districtRepos, wardRepos)
 	authMiddleware := middleware.NewAuthMiddleware(userService)
 	routerHandler := router.NewRouterHandler(deliveryHandle, shippingHandle, vietNamProvinceHandle, authMiddleware)
-	deliveryServiceGRPCServer := deliveryGrpc.NewDeliveryServerGRPC(shippingCostService)
+	deliveryServiceServer := deliveryGrpc.NewDeliveryServerGRPC(shippingCostService)
 	connection := rabbitclient.NewRabbitClientConnection(configConfig)
 	shippingPackageRepos := repos.NewShippingPackageRepos(mongoClient)
 	replyPurchasePublisher := publisher.NewReplyPurchasePublisher(configConfig, connection)
 	shippingPackageService := packageserv.NewShippingPackageService(deliveryRepos, shippingPackageRepos, replyPurchasePublisher)
 	purchaseCreatedSub := subscribers.NewPurchaseCreatedSub(configConfig, connection, shippingPackageService)
 	grpcInterceptor := interceptor.NewGrpcInterceptor(configConfig)
-	server := NewServer(configConfig, routerHandler, deliveryServiceGRPCServer, purchaseCreatedSub, grpcInterceptor)
+	server := NewServer(configConfig, routerHandler, deliveryServiceServer, purchaseCreatedSub, grpcInterceptor)
 	return server, nil
 }
 
@@ -77,7 +77,7 @@ type Server struct {
 
 func NewServer(
 	cfg *config.Config, router2 *router.RouterHandler,
-	deliServ deliveryGrpc.DeliveryServiceGRPCServer,
+	deliServ deliveryGrpc.DeliveryServiceServer,
 	purchaseSub *subscribers.PurchaseCreatedSub,
 	grpcInterceptor *interceptor.GrpcInterceptor) *Server {
 
@@ -110,7 +110,7 @@ func NewServer(
 		InitRouter(&v1)
 
 	grpcServ := grpc.NewServer(grpc.UnaryInterceptor(grpcInterceptor.MiddlewareUnaryRequest))
-	deliveryGrpc.RegisterDeliveryServiceGRPCServer(grpcServ, deliServ)
+	deliveryGrpc.RegisterDeliveryServiceServer(grpcServ, deliServ)
 	return &Server{
 		globalCfg:   cfg,
 		app:         app,
