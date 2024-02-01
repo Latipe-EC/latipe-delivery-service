@@ -13,6 +13,9 @@ setup:
 wire:
 	cd internal/ && wire
 
+wire-linux:
+	cd internal/ && ~/go/bin/wire
+
 protoc:
 	protoc --go_out=. --go_opt=paths=source_relative  --go-grpc_out=. --go-grpc_opt=paths=source_relative .\internal\grpc-service\protobuf\deliveryGrpc\delivery.proto
 
@@ -31,7 +34,7 @@ cleanl:
 # build binary
 buildl:
 	echo "build binary execute file"
-	make wire
+	make wire-linux
 	cd cmd/ && GOOS=linux GOARCH=amd64 $(GO) build -o $(BUILD_DIR)/$(WORKER_MAIN_FILE)_linux .
 
 runl:
