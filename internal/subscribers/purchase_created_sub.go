@@ -46,7 +46,7 @@ func (pb *PurchaseCreatedSub) ListenPurchaseEvent(wg *sync.WaitGroup) {
 
 	// create queue
 	q, err := channel.QueueDeclare(
-		"",
+		"purchase_delivery_commit",
 		true,
 		false,
 		false,
