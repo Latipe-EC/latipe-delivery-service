@@ -20,13 +20,20 @@ import (
 	"delivery-service/internal/service/packageserv"
 	"delivery-service/internal/service/shippingserv"
 	"delivery-service/internal/subscribers"
+	"delivery-service/pkgs/healthservice"
 	"delivery-service/pkgs/mongodb"
 	"delivery-service/pkgs/rabbitclient"
 	"delivery-service/pkgs/resty"
 	"encoding/json"
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
+	"github.com/gofiber/fiber/v2/middleware/basicauth"
+	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/monitor"
+	"github.com/gofiber/swagger"
+	"github.com/hellofresh/health-go/v5"
 	"google.golang.org/grpc"
 	"time"
 )
@@ -88,10 +95,6 @@ func NewServer(
 		JSONEncoder:  json.Marshal,
 	})
 
-	prometheus := fiberprometheus.New("latipe-delivery-service")
-	prometheus.RegisterAt(app, "/metrics")
-	app.Use(prometheus.Middleware)
-
 	app.Use(logger.New())
 
 	app.Get("", func(ctx *fiber.Ctx) error {
@@ -104,6 +107,34 @@ func NewServer(
 		}
 		return ctx.JSON(s)
 	})
+
+	basicAuthConfig := basicauth.Config{
+		Users: map[string]string{
+			cfg.Metrics.Username: cfg.Metrics.Password,
+		},
+	}
+
+	app.Get("/swagger/*", basicauth.New(basicAuthConfig), swagger.HandlerDefault)
+
+	prometheus := fiberprometheus.New("latipe-delivery-service")
+	prometheus.RegisterAt(app, cfg.Metrics.MetricsURL, basicauth.New(basicAuthConfig))
+	app.Use(prometheus.Middleware)
+
+	h, _ := healthService.NewHealthCheckService(cfg)
+	app.Get("/health", basicauth.New(basicAuthConfig), adaptor.HTTPHandlerFunc(h.HandlerFunc))
+	app.Use(healthcheck.New(healthcheck.Config{
+		LivenessProbe: func(c *fiber.Ctx) bool {
+			return true
+		},
+		LivenessEndpoint: "/liveness",
+		ReadinessProbe: func(c *fiber.Ctx) bool {
+			result := h.Measure(c.Context())
+			return result.Status == health.StatusOK
+		},
+		ReadinessEndpoint: "/readiness",
+	}))
+
+	app.Get(cfg.Metrics.FiberDashboard, basicauth.New(basicAuthConfig), monitor.New(monitor.Config{Title: "Delivery Services Metrics Page (Fiber)"}))
 	api2 := app.Group("/api")
 	v1 := api2.Group("/v1")
 	router2.

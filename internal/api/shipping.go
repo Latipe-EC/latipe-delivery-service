@@ -1,6 +1,7 @@
 package api
 
 import (
+	_ "delivery-service/docs"
 	"delivery-service/internal/domain/dto"
 	"delivery-service/internal/service/shippingserv"
 	"delivery-service/pkgs/valid"
@@ -19,6 +20,15 @@ func NewShippingHandle(service *shippingserv.ShippingCostService) *ShippingHandl
 	}
 }
 
+// @Summary Calculate shipping cost by province code
+// @Tags Shipping
+// @Description Calculate shipping cost by province code
+// @Accept json
+// @Produce json
+// @Param body body CalculateShippingCostRequest true "Calculate Shipping Cost Request"
+// @Router /shipping/anonymous [post]
+// @Success 200 {object} CalculateShippingCostResponse
+// @Failure 400 {object} DefaultResponse
 func (api ShippingHandle) CalculateShippingByProvinceCode(ctx *fiber.Ctx) error {
 	var request dto.CalculateShippingCostRequest
 
@@ -41,6 +51,15 @@ func (api ShippingHandle) CalculateShippingByProvinceCode(ctx *fiber.Ctx) error 
 
 }
 
+// @Summary Calculate order shipping cost
+// @Tags Shipping
+// @Description Calculate order shipping cost
+// @Accept json
+// @Produce json
+// @Param body body OrderShippingCostRequest true "Order Shipping Cost Request"
+// @Router /shipping/order [post]
+// @Success 200 {object} OrderShippingCostResponse
+// @Failure 400 {object} DefaultResponse
 func (api ShippingHandle) CalculateOrderShippingCost(ctx *fiber.Ctx) error {
 	var request dto.OrderShippingCostRequest
 

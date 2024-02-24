@@ -17,7 +17,15 @@ type Config struct {
 	RabbitMQ            RabbitMQ
 	Mongodb             Mongodb
 	GRPC                GRPC
+	Metrics             Metrics
 	VietNamLocationData VietNamLocationData
+}
+
+type Metrics struct {
+	MetricsURL     string
+	Username       string
+	Password       string
+	FiberDashboard string
 }
 
 type Server struct {

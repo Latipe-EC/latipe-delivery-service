@@ -56,3 +56,9 @@ AdapterService:
 GRPC:
   Port: :6005
   RootAPIKey: aeceaec7eca63c4187e2ef406f4263d22b89f408
+
+Metrics:
+  MetricsURL: /metrics
+  Username: admin
+  Password: 123123
+  FiberDashboard: /fiber/dashboard

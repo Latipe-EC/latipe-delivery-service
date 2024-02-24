@@ -17,14 +17,21 @@ import (
 	"delivery-service/internal/service"
 	"delivery-service/internal/subscribers"
 	grpcclient "delivery-service/pkgs/grpc"
+	healthService "delivery-service/pkgs/healthservice"
 	"delivery-service/pkgs/mongodb"
 	"delivery-service/pkgs/rabbitclient"
 	restyclient "delivery-service/pkgs/resty"
 	"encoding/json"
 	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
+	"github.com/gofiber/fiber/v2/middleware/basicauth"
+	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/monitor"
+	"github.com/gofiber/swagger"
 	"github.com/google/wire"
+	"github.com/hellofresh/health-go/v5"
 	"google.golang.org/grpc"
 	"time"
 )
@@ -71,10 +78,6 @@ func NewServer(
 		JSONEncoder:  json.Marshal,
 	})
 
-	prometheus := fiberprometheus.New("latipe-delivery-service")
-	prometheus.RegisterAt(app, "/metrics")
-	app.Use(prometheus.Middleware)
-
 	// Initialize default config
 	app.Use(logger.New())
 
@@ -88,6 +91,39 @@ func NewServer(
 		}
 		return ctx.JSON(s)
 	})
+
+	//providing basic authentication for metrics endpoints
+	basicAuthConfig := basicauth.Config{
+		Users: map[string]string{
+			cfg.Metrics.Username: cfg.Metrics.Password,
+		},
+	}
+	//swagger
+	app.Get("/swagger/*", basicauth.New(basicAuthConfig), swagger.HandlerDefault) // default
+
+	// Fiber prometheus
+	prometheus := fiberprometheus.New("latipe-delivery-service")
+	prometheus.RegisterAt(app, cfg.Metrics.MetricsURL, basicauth.New(basicAuthConfig))
+	app.Use(prometheus.Middleware)
+
+	// Healthcheck
+	h, _ := healthService.NewHealthCheckService(cfg)
+	app.Get("/health", basicauth.New(basicAuthConfig), adaptor.HTTPHandlerFunc(h.HandlerFunc))
+	app.Use(healthcheck.New(healthcheck.Config{
+		LivenessProbe: func(c *fiber.Ctx) bool {
+			return true
+		},
+		LivenessEndpoint: "/liveness",
+		ReadinessProbe: func(c *fiber.Ctx) bool {
+			result := h.Measure(c.Context())
+			return result.Status == health.StatusOK
+		},
+		ReadinessEndpoint: "/readiness",
+	}))
+
+	//fiber dashboard
+	app.Get(cfg.Metrics.FiberDashboard, basicauth.New(basicAuthConfig),
+		monitor.New(monitor.Config{Title: "Delivery Services Metrics Page (Fiber)"}))
 
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
