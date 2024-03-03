@@ -45,6 +45,7 @@ type Server struct {
 	ExpirationLimitTime time.Duration //  expiration time of the limit
 }
 type GRPC struct {
+	Connection string
 	RootAPIKey string
 	Port       string
 }
