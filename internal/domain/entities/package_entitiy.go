@@ -34,5 +34,5 @@ type ShippingItems struct {
 	ProductName  string `json:"product_name" bson:"product_name"`
 	ProductID    string `json:"product_id" bson:"product_id"`
 	ProductImage string `json:"product_image" bson:"product_image"`
-	Quantity     string `json:"quantity" bson:"quantity"`
+	Quantity     int    `json:"quantity" bson:"quantity"`
 }
