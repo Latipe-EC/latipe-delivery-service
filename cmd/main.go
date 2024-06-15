@@ -19,20 +19,20 @@ func main() {
 	var wg sync.WaitGroup
 	//subscriber
 	wg.Add(1)
-	go serv.PurchaseCreatedSub().ListenPurchaseEvent(&wg)
+	go runWithRecovery(func() { serv.PurchaseCreatedSub().ListenPurchaseEvent(&wg) })
 
 	//api handler
 	wg.Add(1)
-	go func() {
+	go runWithRecovery(func() {
 		defer wg.Done()
 		if err := serv.App().Listen(serv.Config().Server.RestPort); err != nil {
 			fmt.Printf("%s", err)
 		}
-	}()
+	})
 
 	//grpc handler
 	wg.Add(1)
-	go func() {
+	go runWithRecovery(func() {
 		defer wg.Done()
 		log.Infof("GRPC server run on localhost%v", serv.Config().GRPC.Port)
 		lis, err := net.Listen("tcp", serv.Config().GRPC.Port)
@@ -43,7 +43,16 @@ func main() {
 		if err := serv.DeliServ().Serve(lis); err != nil {
 			log.Infof("%s", err)
 		}
-	}()
+	})
 
 	wg.Wait()
+}
+
+func runWithRecovery(fn func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Debugf("Recovered from panic: %v", r)
+		}
+	}()
+	fn()
 }
