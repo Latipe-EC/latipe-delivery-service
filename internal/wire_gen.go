@@ -32,6 +32,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
+	recover2 "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/swagger"
 	"github.com/hellofresh/health-go/v5"
 	"google.golang.org/grpc"
@@ -96,6 +97,9 @@ func NewServer(
 	})
 
 	app.Use(logger.New())
+
+	recoverConfig := recover2.ConfigDefault
+	app.Use(recover2.New(recoverConfig))
 
 	app.Get("", func(ctx *fiber.Ctx) error {
 		s := struct {

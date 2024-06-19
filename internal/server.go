@@ -29,6 +29,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/healthcheck"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
+	recoverFiber "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/swagger"
 	"github.com/google/wire"
 	"github.com/hellofresh/health-go/v5"
@@ -80,6 +81,9 @@ func NewServer(
 
 	// Initialize default config
 	app.Use(logger.New())
+
+	recoverConfig := recoverFiber.ConfigDefault
+	app.Use(recoverFiber.New(recoverConfig))
 
 	app.Get("", func(ctx *fiber.Ctx) error {
 		s := struct {
